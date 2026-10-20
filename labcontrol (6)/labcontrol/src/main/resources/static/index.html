@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LabControl</title>
+<style>
+  body{font-family:Arial,sans-serif;max-width:900px;margin:20px auto;padding:0 12px;background:#f4f6f8}
+  h1{color:#1f3a5f}
+  form,table{background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 4px #0002;width:100%;box-sizing:border-box}
+  form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+  input,button{padding:8px;font-size:14px}
+  button{cursor:pointer;border:0;border-radius:4px;background:#1f3a5f;color:#fff}
+  button.del{background:#c0392b} button.edit{background:#e67e22}
+  table{border-collapse:collapse} th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
+  #msg{margin:10px 0;font-weight:bold}
+  .ok{color:#27ae60}.erro{color:#c0392b}
+  .full{grid-column:1/-1}
+</style>
+</head>
+<body>
+<h1>LabControl - Equipamentos</h1>
+<div id="msg"></div>
+
+<form id="form">
+  <input type="hidden" id="id">
+  <input id="nome" placeholder="Nome (3-100)" required>
+  <input id="numeroPatrimonio" placeholder="Nº Patrimônio" required>
+  <input id="categoria" placeholder="Categoria" required>
+  <input id="quantidade" type="number" min="0" placeholder="Quantidade" required>
+  <button class="full" type="submit" id="btnSalvar">Cadastrar</button>
+  <button class="full" type="button" id="btnCancelar" style="display:none;background:#7f8c8d">Cancelar edição</button>
+</form>
+
+<table>
+  <thead><tr><th>ID</th><th>Nome</th><th>Patrimônio</th><th>Categoria</th><th>Qtd</th><th>Ações</th></tr></thead>
+  <tbody id="lista"></tbody>
+</table>
+
+<script>
+const API = "/equipamentos";
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let cache = [];
+
+function mostrar(texto, ok = true) {
+  $("msg").textContent = texto;
+  $("msg").className = ok ? "ok" : "erro";
+}
+
+async function tratarErro(res) {
+  const e = await res.json().catch(() => ({}));
+  let txt = e.mensagem || "Erro " + res.status;
+  if (e.detalhes) txt += ": " + Object.values(e.detalhes).join("; ");
+  mostrar(txt, false);
+}
+
+async function listar() {
+  const res = await fetch(API);
+  cache = await res.json();
+  $("lista").innerHTML = cache.map(e => `
+    <tr>
+      <td>${e.id}</td><td>${esc(e.nome)}</td><td>${esc(e.numeroPatrimonio)}</td>
+      <td>${esc(e.categoria)}</td><td>${e.quantidade}</td>
+      <td>
+        <button class="edit" onclick="editar(${e.id})">Editar</button>
+        <button class="del" onclick="excluir(${e.id})">Excluir</button>
+      </td>
+    </tr>`).join("");
+}
+
+$("form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const id = $("id").value;
+  const corpo = {
+    nome: $("nome").value,
+    numeroPatrimonio: $("numeroPatrimonio").value,
+    categoria: $("categoria").value,
+    quantidade: Number($("quantidade").value)
+  };
+  const res = await fetch(id ? `${API}/${id}` : API, {
+    method: id ? "PUT" : "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(corpo)
+  });
+  if (!res.ok) return tratarErro(res);
+  mostrar(id ? "Equipamento atualizado!" : "Equipamento cadastrado!");
+  limpar(); listar();
+});
+
+function editar(id) {
+  const e = cache.find(x => x.id === id);
+  $("id").value = e.id; $("nome").value = e.nome;
+  $("numeroPatrimonio").value = e.numeroPatrimonio;
+  $("categoria").value = e.categoria; $("quantidade").value = e.quantidade;
+  $("btnSalvar").textContent = "Salvar alterações";
+  $("btnCancelar").style.display = "block";
+  window.scrollTo(0, 0);
+}
+
+async function excluir(id) {
+  if (!confirm("Excluir equipamento " + id + "?")) return;
+  const res = await fetch(`${API}/${id}`, {method: "DELETE"});
+  if (!res.ok) return tratarErro(res);
+  mostrar("Equipamento excluído!"); listar();
+}
+
+function limpar() {
+  $("form").reset(); $("id").value = "";
+  $("btnSalvar").textContent = "Cadastrar";
+  $("btnCancelar").style.display = "none";
+}
+$("btnCancelar").onclick = limpar;
+
+listar();
+</script>
+</body>
+</html>

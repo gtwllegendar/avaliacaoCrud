@@ -1,0 +1,38 @@
+LABCONTROL - COMO INSTALAR E RODAR (qualquer pessoa, qualquer PC)
+
+REQUISITOS
+- JDK 17 ou superior
+- IntelliJ IDEA (Community ou Ultimate) - ja traz o Maven embutido
+- MySQL: use UMA das opcoes abaixo
+
+PASSO 1 - BANCO DE DADOS (escolha uma opcao)
+ Opcao A (mais facil, com Docker):
+   Na pasta do projeto rode:  docker compose up -d
+   Isso sobe um MySQL com usuario root / senha root e o banco labcontrol. Nada mais a fazer.
+
+ Opcao B (MySQL instalado na sua maquina):
+   1. Rode o arquivo schema.sql no MySQL Workbench (ou deixe o Spring criar sozinho).
+   2. Se a sua senha do MySQL NAO for "root":
+      copie src/main/resources/application-local.properties.example
+      para  src/main/resources/application-local.properties
+      e coloque sua senha nele (esse arquivo nao vai para o Git).
+      (Alternativa: defina a variavel de ambiente DB_PASSWORD.)
+
+PASSO 2 - ABRIR NO INTELLIJ
+ 1. File > Open > escolha a pasta "labcontrol" (a que contem o pom.xml).
+ 2. Se perguntar, clique em "Trust Project" e depois "Load Maven Project".
+ 3. Aguarde o Maven baixar as dependencias (barra de progresso no canto inferior).
+ 4. Confirme em File > Project Structure > Project que o SDK e o Java 17+.
+
+PASSO 3 - RODAR
+ - Clique no botao verde (Run) da configuracao "LabcontrolApplication"
+   (ou abra LabcontrolApplication.java e clique no triangulo verde ao lado do main).
+ - Aguarde a mensagem "Started LabcontrolApplication".
+ - Front-end: http://localhost:8080/
+ - API:       http://localhost:8080/equipamentos  (teste no Postman)
+
+PROBLEMAS COMUNS
+ - "Access denied for user root": senha diferente - veja a Opcao B, passo 2.
+ - "Communications link failure": MySQL desligado (ou docker compose up -d nao foi executado).
+ - Porta 3306 ocupada: use SO UMA opcao de banco (MySQL local OU Docker).
+ - Porta 8080 ocupada: adicione server.port=8081 no application.properties.

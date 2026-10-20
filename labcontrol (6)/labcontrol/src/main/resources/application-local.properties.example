@@ -1,0 +1,3 @@
+# Copie este arquivo para application-local.properties e coloque a SUA senha/usuario do MySQL.
+spring.datasource.username=root
+spring.datasource.password=SUA_SENHA_AQUI

@@ -1,0 +1,15 @@
+# Sobe um MySQL pronto para o LabControl (nao precisa instalar MySQL):  docker compose up -d
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: labcontrol-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: labcontrol
+    ports:
+      - "3306:3306"
+    volumes:
+      - labcontrol-data:/var/lib/mysql
+volumes:
+  labcontrol-data:
